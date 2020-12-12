@@ -45,6 +45,7 @@ namespace Note.Models
 
         public async Task UpdateNote(Note note)
         {
+            note.LastUpdatedAt = DateTime.Now;
             await Notes.ReplaceOneAsync(new BsonDocument("_id", new ObjectId(note.Id)), note);
         }
 

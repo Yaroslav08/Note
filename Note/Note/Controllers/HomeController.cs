@@ -12,26 +12,77 @@ namespace Note.Controllers
     public class HomeController : Controller
     {
         private readonly ILogger<HomeController> _logger;
+        private readonly NoteService db;
 
-        public HomeController(ILogger<HomeController> logger)
+        public HomeController(ILogger<HomeController> logger, NoteService _db)
         {
             _logger = logger;
+            db = _db;
         }
 
-        public IActionResult Index()
+        [HttpGet("/")]
+        public async Task<IActionResult> Index()
+        {
+            return View(await db.GetAllNotes());
+        }
+
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetDetails(string id)
+        {
+            var note = await db.GetById(id);
+            if (note == null)
+            {
+                ViewBag.Error = "Note by id not found";
+                return LocalRedirect("~/");
+            }
+            return View(note);
+        }
+
+
+
+        [HttpGet("new")]
+        public IActionResult CreateNew()
         {
             return View();
         }
 
-        public IActionResult Privacy()
+        [HttpPost("new")]
+        public async Task<IActionResult> CreateNew(Models.Note note)
         {
-            return View();
+            if (ModelState.IsValid)
+            {
+                await db.CreateNote(note);
+                return LocalRedirect("~/");
+            }
+            return View(note);
         }
 
-        [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
-        public IActionResult Error()
+
+
+        [HttpGet("edit")]
+        public async Task<IActionResult> Update(string id)
         {
-            return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
+            var note = await db.GetById(id);
+            if (note == null)
+            {
+                ViewBag.Error = "Note by id not found";
+                return LocalRedirect("~/");
+            }
+            return View(note);
+        }
+
+        [HttpPost("edit")]
+        public async Task<IActionResult> Update(Models.Note note)
+        {
+            await db.UpdateNote(note);
+            return LocalRedirect("~/");
+        }
+
+        [HttpGet("remove")]
+        public async Task<IActionResult> Remove(string id)
+        {
+            await db.Remove(id);
+            return LocalRedirect("~/");
         }
     }
 }
